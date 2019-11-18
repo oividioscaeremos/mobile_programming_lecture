@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
 import 'question_brain.dart';
 
 void main() => runApp(Quizzler());
@@ -28,19 +29,63 @@ class QuizPage extends StatefulWidget {
 }
 
 class _QuizPageState extends State<QuizPage> {
+  QuestionBrain brain = new QuestionBrain();
+  List<int> askedQuestions = new List<int>();
+
   int random = Random().nextInt(12);
 
-  QuestionBrain brain = new QuestionBrain();
+  bool checkResult() {
+    if (askedQuestions.length == brain.getQuantityOfQuestions()) {
+      int score = 0;
+      scoreKeeper.forEach((answer) {
+        if (answer == icons[0]) score++;
+      });
+
+      print(score);
+
+      if (score >= brain.getQuantityOfQuestions() / 2) {
+        setState(() {
+          return Alert(
+            context: context,
+            title: "TEBRİKLER!",
+            desc: "13 Sorudan $score Adetini Doğru Bildin!",
+            image: Image.asset("images/success.png"),
+          ).show();
+        });
+      } else {
+        setState(() {
+          return Alert(
+            context: context,
+            title: "BU SEFER OLMADI!",
+            desc: "13 Sorudan Sadece $score Adetini Doğru Bildin.",
+            image: Image.asset("images/failure.png"),
+          ).show();
+        });
+      }
+    } else {
+      return false;
+    }
+  }
+
+  int getRandom() {
+    while (askedQuestions.indexOf(random) != -1) {
+      random = Random().nextInt(13);
+    }
+
+    askedQuestions.add(random);
+
+    return random;
+  }
 
   List<Widget> icons = [
     Icon(
       Icons.check,
-      size: 50,
+      size: 25,
       color: Colors.green,
     ),
     Icon(
       Icons.close,
-      size: 50,
+      size: 25,
       color: Colors.red,
     )
   ];
@@ -59,7 +104,7 @@ class _QuizPageState extends State<QuizPage> {
             padding: EdgeInsets.all(10.0),
             child: Center(
               child: Text(
-                brain.questions[random].questionText,
+                brain.getQuestionText(getRandom()),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 25.0,
@@ -85,14 +130,9 @@ class _QuizPageState extends State<QuizPage> {
               onPressed: () {
                 //The user picked true.
                 setState(() {
-                  if (brain.questions[random].answer == true) {
-                    scoreKeeper.add(icons[0]);
-                  } else if (brain.questions[random].answer == false) {
-                    scoreKeeper.add(icons[1]);
-                  }
-                  var a = random;
-                  while (random == a) {
-                    random = Random().nextInt(12);
+                  if (checkResult() == false) {
+                    scoreKeeper.add(
+                        icons[brain.getCorrectAnswer(random) == true ? 0 : 1]);
                   }
                 });
               },
@@ -114,15 +154,9 @@ class _QuizPageState extends State<QuizPage> {
               onPressed: () {
                 //The user picked false.
                 setState(() {
-                  if (brain.questions[random].answer == false) {
-                    scoreKeeper.add(icons[0]);
-                  } else if (brain.questions[random].answer == true) {
-                    scoreKeeper.add(icons[1]);
-                  }
-
-                  var a = random;
-                  while (random == a) {
-                    random = Random().nextInt(12);
+                  if (checkResult() == false) {
+                    scoreKeeper.add(
+                        icons[brain.getCorrectAnswer(random) == false ? 0 : 1]);
                   }
                 });
               },
@@ -140,9 +174,3 @@ class _QuizPageState extends State<QuizPage> {
     );
   }
 }
-
-/*
-question1: 'You can lead a cow down stairs but not up stairs.', false,
-question2: 'Approximately one quarter of human bones are in the feet.', true,
-question3: 'A slug\'s blood is green.', true,
-*/
